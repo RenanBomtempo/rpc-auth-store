@@ -62,14 +62,8 @@ class AuthServer:
         self.users[username].permissions = permissions
         return 0
 
+    def check_access(self, secret):
+        if secret not in self.authentications:
+            return "NE"
+        return self.authentications[secret]
 
-    def create_user(self, username, password, permissions, secret):
-        if secret != self.users['super'].secret:
-            print("ERROR: Only the admin can create users")
-            return -1
-        if username in self.users:
-            print("ERROR: User already exists")
-            return -2
-        self.users[username] = User(secrets.token_bytes(
-            TOKEN_SIZE), password, permissions)
-        return 0
