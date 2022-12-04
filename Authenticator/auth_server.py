@@ -62,8 +62,39 @@ class AuthServer:
         self.users[username].permissions = permissions
         return 0
 
+    def authenticate(self, username, password):
+        # Check if user exists and password is correct
+        if username not in self.users or self.get_user_password(username) != password:
+            return -1, b"\0" * TOKEN_SIZE
+
+        # Generate new secret and update user's previous secret
+        secret = secrets.token_bytes(TOKEN_SIZE)
+        self.set_user_secret(username, secret)
+        return 0, secret
+
+    def create_user(self, username, password, permissions, secret):
+        if secret != self.users['super'].secret:
+            print("ERROR: Only the admin can create users")
+            return -1
+        if username in self.users:
+            print("ERROR: User already exists")
+            return -2
+        self.users[username] = User(secrets.token_bytes(
+            TOKEN_SIZE), password, permissions)
+        return 0
+
     def check_access(self, secret):
         if secret not in self.authentications:
             return "NE"
         return self.authentications[secret]
 
+    def shutdown(self):
+        # TODO: Implement shutdown for gRPC server
+        return len(self.users)
+
+
+def main():
+    port = int(sys.argv[1])
+    admin_password = sys.argv[2]
+
+    server = AuthServer(port, admin_password)
