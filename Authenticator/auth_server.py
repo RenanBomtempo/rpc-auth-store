@@ -62,3 +62,12 @@ class AuthServer:
         self.users[username].permissions = permissions
         return 0
 
+    def authenticate(self, username, password):
+        # Check if user exists and password is correct
+        if username not in self.users or self.get_user_password(username) != password:
+            return -1, b"\0" * TOKEN_SIZE
+
+        # Generate new secret and update user's previous secret
+        secret = secrets.token_bytes(TOKEN_SIZE)
+        self.set_user_secret(username, secret)
+        return 0, secret
