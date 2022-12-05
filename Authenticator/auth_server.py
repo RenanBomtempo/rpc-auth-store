@@ -10,6 +10,11 @@ class User:
         self.password = password
         self.permissions = permissions
 
+    def __str__(self) -> str:
+        return f"User(password={self.password}, permissions={self.permissions}, secret={int.from_bytes(self.secret, byteorder='big')})"
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
 class AuthServer:
     def __init__(self, port, admin_password):
@@ -37,13 +42,7 @@ class AuthServer:
             print("ERROR: User does not exist")
             return -1
 
-        old_secret = self.get_user_secret(username)
-        if old_secret in self.authentications:
-            permissions = self.authentications.pop(old_secret)
-        else:
-            permissions = self.get_user_permissions(username)
-
-        self.authentications[secret] = permissions
+        self.users[username].secret = secret
         return 0
 
     def set_user_password(self, username, password):
@@ -68,9 +67,18 @@ class AuthServer:
             return -1, b"\0" * TOKEN_SIZE
 
         # Generate new secret and update user's previous secret
-        secret = secrets.token_bytes(TOKEN_SIZE)
-        self.set_user_secret(username, secret)
-        return 0, secret
+        new_secret = secrets.token_bytes(TOKEN_SIZE)
+        
+        # Update authentications
+        old_secret = self.get_user_secret(username)
+        if old_secret in self.authentications:
+            permissions = self.authentications.pop(old_secret)
+        else:
+            permissions = self.get_user_permissions(username)
+
+        self.authentications[new_secret] = permissions
+        self.set_user_secret(username, new_secret)
+        return 0, new_secret
 
     def create_user(self, username, password, permissions, secret):
         if secret != self.users['super'].secret:
@@ -98,3 +106,17 @@ def main():
     admin_password = sys.argv[2]
 
     server = AuthServer(port, admin_password)
+    print(server.users)
+
+    secret = server.authenticate('super', admin_password)[1]
+    print(server.users)
+
+    server.create_user('user1', 'pass1', 'RO', secret)
+    print(server.users)
+    print(server.get_user_password('user1'))
+    print(server.get_user_permissions('user1'))
+    # print new user's secret in decimal
+    print(int.from_bytes(server.get_user_secret('user1'), byteorder='big'))
+
+if __name__ == "__main__":
+    main()
