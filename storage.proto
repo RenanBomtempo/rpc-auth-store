@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package storage;
+
+service Storage {
+  rpc Insert(InsertRequest) returns (InsertReply) {}
+  rpc Get(GetRequest) returns (GetReply) {}
+  rpc Terminate(TerminateRequest) returns (TerminateReply) {}
+}
+
+message InsertRequest {
+  int32 key = 1;
+  string value = 2;
+  bytes secret = 3;
+}
+
+message InsertReply {
+  int32 status = 1;
+}
+
+message GetRequest {
+    int32 key = 1;
+    bytes secret = 2;
+}
+
+message GetReply {
+    string value = 1;
+}
+
+message TerminateRequest {
+}
+
+message TerminateReply {
+    int32 status = 1;
+    string message = 2;
+}
+    

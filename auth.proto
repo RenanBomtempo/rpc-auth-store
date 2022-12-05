@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package auth;
+
+service Auth {
+  rpc Authenticate (AuthenticateRequest) returns (AuthenticateReply) {}
+  rpc CreateUser (CreateUserRequest) returns (CreateUserReply) {}
+  rpc VerifyAccess (VerifyAccessRequest) returns (VerifyAccessReply) {}
+  rpc FinishExecution (FinishExecutionRequest) returns (FinishExecutionReply) {}
+}
+
+message AuthenticateRequest {
+  string identifier = 1;
+  int32 password = 2;
+}
+
+message AuthenticateReply {
+  int32 status = 1;
+  bytes secret = 2;
+}
+
+message CreateUserRequest {
+  string identifier = 1;
+  int32 password = 2;
+  string permissions = 3;
+  bytes secret = 4;
+}
+
+message CreateUserReply {
+  int32 status = 1;
+}
+
+message VerifyAccessRequest {
+  bytes secret = 1;
+}
+
+message VerifyAccessReply {
+  string permissions = 1;
+}
+
+message FinishExecutionRequest {}
+
+message FinishExecutionReply {
+  int32 users = 1;
+}
+
