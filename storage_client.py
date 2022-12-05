@@ -2,9 +2,8 @@ import storage_pb2
 import storage_pb2_grpc
 import grpc
 import sys
-import threading
 from auth_client import AuthClient
-from concurrent import futures
+
 
 class StorageClient:
     def __init__(self, auth_server, storage_server_id):
@@ -12,29 +11,37 @@ class StorageClient:
 
         self.host = storage_server_id.split(':')[0]
         self.port = storage_server_id.split(':')[1]
-
         channel = grpc.insecure_channel(f"{self.host}:{self.port}")
         self.stub = storage_pb2_grpc.StorageStub(channel)
         print("Connected to StorageServer at {}:{}".format(self.host, self.port))
 
     def authenticate(self, identifier, password):
+        # Authenticate with the auth server
         status = self.auth.Authenticate(identifier, password)
         return status
 
     def insert(self, key, value):
+        # Check if the user is authenticated
         if self.auth.secret is None:
             return -9
-        result = self.stub.Insert(storage_pb2.InsertRequest(key=key, value=value, secret=self.auth.secret))
+        
+        # Insert a key-value pair into the storage server
+        result = self.stub.Insert(storage_pb2.InsertRequest(
+            key=key, value=value, secret=self.auth.secret))
         return result.status
 
     def query(self, key):
-        result = self.stub.Get(storage_pb2.GetRequest(key=key, secret=self.auth.secret))
+        # Query the storage server for the value of a key
+        result = self.stub.Get(storage_pb2.GetRequest(
+            key=key, secret=self.auth.secret))
         return result.value
 
     def terminate(self):
+        # Terminate the storage server
         return self.stub.Terminate(storage_pb2.TerminateRequest())
 
     def finish(self):
+        # Finish the auth server
         return self.auth.Finish()
 
     def __str__(self) -> str:
